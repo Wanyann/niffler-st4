@@ -2,13 +2,16 @@ package guru.qa.niffler.test;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
+import guru.qa.niffler.jupiter.BrowserExtension;
 import guru.qa.niffler.ui.pages.LoginPage;
 import guru.qa.niffler.ui.pages.MainPage;
 import guru.qa.niffler.ui.pages.WelcomePage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-public class BaseTest {
+@ExtendWith({BrowserExtension.class})
+public abstract class BaseWebTest {
     public MainPage mainPage = new MainPage();
     public LoginPage loginPage = new LoginPage();
     public WelcomePage welcomePage = new WelcomePage();
