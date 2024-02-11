@@ -7,11 +7,19 @@ import java.util.UUID;
 
 public interface UserRepository {
 
-    UserAuthEntity createInAuth(UserAuthEntity user);
+  UserAuthEntity createInAuth(UserAuthEntity user);
 
-    UserEntity createInUserdata(UserEntity user);
+  UserEntity createInUserdata(UserEntity user);
 
-    void deleteInAuthById(UUID id);
+  void deleteInAuthById(UUID id);
 
-    void deleteInUserdataById(UUID id);
+  void deleteInUserdataById(UUID id);
+
+  UserEntity getInUserdataById(UUID id);
+
+  UserAuthEntity getInAuthById(UUID id);
+
+  UserEntity updateInUserdataById(UserEntity user);
+
+  UserAuthEntity updateInAuthById(UserAuthEntity user);
 }
