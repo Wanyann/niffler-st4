@@ -6,9 +6,11 @@ import guru.qa.niffler.model.UserJson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.*;
 
+import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +23,7 @@ public class UsersQueueExtension implements BeforeEachCallback, AfterTestExecuti
   public static final ExtensionContext.Namespace NAMESPACE
       = ExtensionContext.Namespace.create(UsersQueueExtension.class);
 
-  private static final Map<User.UserType, Queue<UserJson>> users = new ConcurrentHashMap<>();
+  private static final Map<User.UserType, Queue<UserJson>> USER_QUEUES = new ConcurrentHashMap<>();
 
   static {
     Queue<UserJson> friendsQueue = new ConcurrentLinkedQueue<>();
@@ -34,10 +36,10 @@ public class UsersQueueExtension implements BeforeEachCallback, AfterTestExecuti
     commonQueue.add(user("barsik", "12345", COMMON));
     invitationSendQueue.add(user("test", "12345", INVITATION_SEND));
     invitationReceivedQueue.add(user("guy", "12345", INVITATION_RECEIVED));
-    users.put(WITH_FRIENDS, friendsQueue);
-    users.put(COMMON, commonQueue);
-    users.put(INVITATION_SEND, invitationSendQueue);
-    users.put(INVITATION_RECEIVED, invitationReceivedQueue);
+    USER_QUEUES.put(WITH_FRIENDS, friendsQueue);
+    USER_QUEUES.put(COMMON, commonQueue);
+    USER_QUEUES.put(INVITATION_SEND, invitationSendQueue);
+    USER_QUEUES.put(INVITATION_RECEIVED, invitationReceivedQueue);
   }
 
   private static UserJson user(String username, String password, User.UserType userType) {
@@ -59,84 +61,60 @@ public class UsersQueueExtension implements BeforeEachCallback, AfterTestExecuti
   // todo смержить данные о параметрах before each и самого тестового метода. понять, как выполняется before each extension с тестовым методом
   // todo и методом before each. before extension выполняется единожды перед тестом.
   @Override
-  public void beforeEach(ExtensionContext context) throws Exception {
-    System.out.println("\n\n######## Before start");
-    System.out.println("############ Выполняю before ext для метода " + context.getRequiredTestMethod() + ". id " + context.getUniqueId());
+  public void beforeEach(ExtensionContext context) {
+    List<Method> requiredMethods = new java.util.ArrayList<>(List.of(context.getRequiredTestMethod()));
+    requiredMethods.addAll(
+        Arrays.stream(context.getRequiredTestClass().getDeclaredMethods())
+            .filter(m -> m.isAnnotationPresent(BeforeEach.class))
+            .toList());
 
-    Parameter[] parameters = context.getRequiredTestMethod().getParameters();
-
-    Method[] declaredMethods = context.getRequiredTestClass().getDeclaredMethods();
-    for (Method declaredMethod : declaredMethods) {
-      if (declaredMethod.isAnnotationPresent(BeforeEach.class)) {
-        Parameter[] methodParameters = parameters.clone();
-        Parameter[] beforeParameters = declaredMethod.getParameters();
-        parameters = new Parameter[methodParameters.length + beforeParameters.length];
-        System.arraycopy(methodParameters, 0, parameters, 0, methodParameters.length);
-        System.arraycopy(beforeParameters, 0, parameters, methodParameters.length, beforeParameters.length);
-        break;
-      }
-    }
-
-    System.out.println("Параметры после проверки " + Arrays.toString(parameters));
+    List<Parameter> parameters = requiredMethods.stream()
+        .map(Executable::getParameters)
+        .flatMap(Arrays::stream)
+        .filter(parameter -> parameter.isAnnotationPresent(User.class))
+        .filter(parameter -> parameter.getType().isAssignableFrom(UserJson.class))
+        .toList();
 
     for (Parameter parameter : parameters) {
       User annotation = parameter.getAnnotation(User.class);
-      System.out.println("try to find annotation " + parameter);
-      if (annotation != null && parameter.getType().isAssignableFrom(UserJson.class)) {
-        System.out.println("annotation found " + annotation);
-        UserJson testCandidate = null;
-        Queue<UserJson> queue = users.get(annotation.value());
-        while (testCandidate == null) {
-          testCandidate = queue.poll();
-        }
-        System.out.println("ключ " + context.getUniqueId() + parameter.getName() + parameter.getDeclaringExecutable().getName());
-        System.out.println("беру " + testCandidate);
-        context.getStore(NAMESPACE).put(context.getUniqueId() + parameter.getName() + parameter.getDeclaringExecutable().getName(), testCandidate);
+      UserJson testCandidate = null;
+      Queue<UserJson> queue = USER_QUEUES.get(annotation.value());
+      while (testCandidate == null) {
+        testCandidate = queue.poll();
       }
+
+      context.getStore(NAMESPACE).put(parameterContextKey(parameter, context), testCandidate);
     }
-    System.out.println("Before");
-    users.forEach((key, value) -> System.out.println(key + " " + value));
-    System.out.println("####### Before end");
   }
 
   @Override
-  public void afterTestExecution(ExtensionContext context) throws Exception {
-    System.out.println("\n\n######## After start");
-    Parameter[] parameters = context.getRequiredTestMethod().getParameters();
+  public void afterTestExecution(ExtensionContext context) {
+    List<Method> requiredMethods = new java.util.ArrayList<>(List.of(context.getRequiredTestMethod()));
+    requiredMethods.addAll(
+        Arrays.stream(context.getRequiredTestClass().getDeclaredMethods())
+            .filter(m -> m.isAnnotationPresent(BeforeEach.class))
+            .toList());
 
-    Method[] declaredMethods = context.getRequiredTestClass().getDeclaredMethods();
-    for (Method declaredMethod : declaredMethods) {
-      if (declaredMethod.isAnnotationPresent(BeforeEach.class)) {
-        Parameter[] methodParameters = parameters.clone();
-        Parameter[] beforeParameters = declaredMethod.getParameters();
-        parameters = new Parameter[methodParameters.length + beforeParameters.length];
-        System.arraycopy(methodParameters, 0, parameters, 0, methodParameters.length);
-        System.arraycopy(beforeParameters, 0, parameters, methodParameters.length, beforeParameters.length);
-        break;
-      }
-    }
+    List<Parameter> parameters = requiredMethods.stream()
+        .map(Executable::getParameters)
+        .flatMap(Arrays::stream)
+        .filter(parameter -> parameter.isAnnotationPresent(User.class))
+        .filter(parameter -> parameter.getType().isAssignableFrom(UserJson.class))
+        .toList();
 
     for (Parameter parameter : parameters) {
       User annotation = parameter.getAnnotation(User.class);
-      System.out.println("\n##### check test params");
-      System.out.println("try to find annotation " + parameter);
-      if (annotation != null && parameter.getType().isAssignableFrom(UserJson.class)) {
-        System.out.println("annotation found " + annotation);
 
-        UserJson userFromTest = context.getStore(NAMESPACE)
-            .get(context.getUniqueId() + parameter.getName() + parameter.getDeclaringExecutable().getName(), UserJson.class);
-        System.out.println("возвращаю " + userFromTest);
-        users.get(userFromTest.testData().userType()).add(userFromTest);
-      }
+      UserJson userFromTest = context.getStore(NAMESPACE)
+          .get(parameterContextKey(parameter, context), UserJson.class);
+      USER_QUEUES.get(userFromTest.testData().userType()).add(userFromTest);
     }
-
-    System.out.println("\n After");
-    users.forEach((key, value) -> System.out.println(key + " " + value));
-
   }
 
+
   @Override
-  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws
+      ParameterResolutionException {
     return parameterContext.getParameter()
         .getType()
         .isAssignableFrom(UserJson.class) &&
@@ -144,11 +122,12 @@ public class UsersQueueExtension implements BeforeEachCallback, AfterTestExecuti
   }
 
   @Override
-  public UserJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    System.out.println(parameterContext.getParameter());
-    return extensionContext.getStore(NAMESPACE)
-        .get(extensionContext.getUniqueId() +
-            parameterContext.getParameter().getName() +
-            parameterContext.getParameter().getDeclaringExecutable().getName(), UserJson.class);
+  public UserJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws
+      ParameterResolutionException {
+    return extensionContext.getStore(NAMESPACE).get(parameterContextKey(parameterContext.getParameter(), extensionContext), UserJson.class);
+  }
+
+  private String parameterContextKey(Parameter parameter, ExtensionContext context) {
+    return context.getUniqueId() + parameter.getName() + parameter.getDeclaringExecutable().getName();
   }
 }
