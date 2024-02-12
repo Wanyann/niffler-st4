@@ -2,7 +2,7 @@ package guru.qa.niffler.test;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
-import guru.qa.niffler.jupiter.BrowserExtension;
+import guru.qa.niffler.jupiter.extension.BrowserExtension;
 import guru.qa.niffler.ui.pages.LoginPage;
 import guru.qa.niffler.ui.pages.MainPage;
 import guru.qa.niffler.ui.pages.PeoplePage;
