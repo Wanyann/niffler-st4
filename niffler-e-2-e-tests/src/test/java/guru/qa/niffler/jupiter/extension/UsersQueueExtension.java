@@ -1,5 +1,6 @@
-package guru.qa.niffler.jupiter;
+package guru.qa.niffler.jupiter.extension;
 
+import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CurrencyValues;
 import guru.qa.niffler.model.TestData;
 import guru.qa.niffler.model.UserJson;
@@ -16,7 +17,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static guru.qa.niffler.jupiter.User.UserType.*;
+import static guru.qa.niffler.jupiter.annotation.User.UserType.*;
+
 
 public class UsersQueueExtension implements BeforeEachCallback, AfterTestExecutionCallback, ParameterResolver {
 
