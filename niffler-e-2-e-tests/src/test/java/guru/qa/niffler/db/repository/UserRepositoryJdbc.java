@@ -147,14 +147,15 @@ public class UserRepositoryJdbc implements UserRepository {
                "DELETE FROM \"friendship\" WHERE friend_id=(?)")
       ) {
 
-        userPs.setObject(1, id);
-        userPs.executeUpdate();
 
         friendsPs.setObject(1, id);
         friendsPs.executeUpdate();
 
         invitesPs.setObject(1, id);
         invitesPs.executeUpdate();
+
+        userPs.setObject(1, id);
+        userPs.executeUpdate();
 
         conn.commit();
       } catch (SQLException e) {
