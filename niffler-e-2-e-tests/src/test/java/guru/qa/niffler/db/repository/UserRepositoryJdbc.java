@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class UserRepositoryJdbc implements UserRepository {
@@ -116,14 +117,9 @@ public class UserRepositoryJdbc implements UserRepository {
                    "WHERE user_id=(?)")
       ) {
         userPs.setObject(1, id);
+        authorityPs.setObject(1, id);
 
-        for (Authority ignored : Authority.values()) {
-          authorityPs.setObject(1, id);
-          authorityPs.addBatch();
-          authorityPs.clearParameters();
-        }
-
-        authorityPs.executeBatch();
+        authorityPs.executeUpdate();
 
         userPs.executeUpdate();
 
@@ -156,7 +152,7 @@ public class UserRepositoryJdbc implements UserRepository {
   }
 
   @Override
-  public UserEntity getInUserdataById(UUID id) {
+  public Optional<UserEntity> getInUserdataById(UUID id) {
     try (Connection conn = udDs.getConnection()) {
       try (PreparedStatement ps = conn.prepareStatement(
           "SELECT * FROM \"user\"" +
@@ -173,7 +169,7 @@ public class UserRepositoryJdbc implements UserRepository {
             user.setFirstname(rs.getString("firstname"));
             user.setSurname(rs.getString("surname"));
             user.setPhoto(rs.getBytes("photo"));
-            return user;
+            return Optional.of(user);
           } else {
             throw new RuntimeException("User not found");
           }
@@ -185,7 +181,7 @@ public class UserRepositoryJdbc implements UserRepository {
   }
 
   @Override
-  public UserAuthEntity getInAuthById(UUID id) {
+  public Optional<UserAuthEntity> getInAuthById(UUID id) {
     try (Connection conn = authDs.getConnection()) {
       try (PreparedStatement userPs = conn.prepareStatement(
           "SELECT * FROM \"user\"" +
@@ -223,7 +219,7 @@ public class UserRepositoryJdbc implements UserRepository {
           }
           userAuth.setAuthorities(authorities);
         }
-        return userAuth;
+        return Optional.of(userAuth);
       }
     } catch (
         SQLException e) {
