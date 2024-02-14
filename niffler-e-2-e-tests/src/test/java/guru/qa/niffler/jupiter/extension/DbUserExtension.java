@@ -3,7 +3,7 @@ package guru.qa.niffler.jupiter.extension;
 import com.github.javafaker.Faker;
 import guru.qa.niffler.db.model.*;
 import guru.qa.niffler.db.repository.UserRepository;
-import guru.qa.niffler.db.repository.UserRepositoryJdbc;
+import guru.qa.niffler.db.repository.UserRepositorySJdbc;
 import guru.qa.niffler.jupiter.annotation.DbUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.*;
@@ -18,7 +18,7 @@ public class DbUserExtension implements BeforeEachCallback, AfterEachCallback, P
   public static final String USER_ID = "userId";
   public static final String AUTH_ID = "authId";
   static final Faker FAKER = new Faker();
-  UserRepository userRepository = new UserRepositoryJdbc();
+  UserRepository userRepository = new UserRepositorySJdbc();
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
@@ -33,6 +33,7 @@ public class DbUserExtension implements BeforeEachCallback, AfterEachCallback, P
     UserEntity user = new UserEntity();
 
     boolean passLocked = false;
+
     boolean usernameLocked = false;
 
     for (Method method : requiredMethods) {
@@ -109,4 +110,5 @@ public class DbUserExtension implements BeforeEachCallback, AfterEachCallback, P
     return extensionContext.getStore(DbUserExtension.NAMESPACE)
         .get(extensionContext.getUniqueId() + USER_KEY, UserAuthEntity.class);
   }
+
 }
