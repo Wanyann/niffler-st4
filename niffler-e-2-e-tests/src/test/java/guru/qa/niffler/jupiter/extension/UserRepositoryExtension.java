@@ -14,14 +14,15 @@ public class UserRepositoryExtension implements TestInstancePostProcessor {
     for (Field field : o.getClass().getDeclaredFields()) {
       if (field.getType().isAssignableFrom(UserRepository.class)) {
         field.setAccessible(true);
+        if (System.getProperty("repository") == null) {
+          field.set(o, new UserRepositorySJdbc());
+          return;
+        }
         switch (System.getProperty("repository")) {
           case "jdbc": {
             field.set(o, new UserRepositoryJdbc());
           }
           case "sjdbc": {
-            field.set(o, new UserRepositorySJdbc());
-          }
-          default: {
             field.set(o, new UserRepositorySJdbc());
           }
         }
