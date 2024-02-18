@@ -156,7 +156,7 @@ public class UserRepositorySJdbc implements UserRepository {
 
   @Override
   public UserEntity updateInUserdataById(UserEntity user) {
-    udTxt.execute(status -> {
+    return udTxt.execute(status -> {
       udTemplate.update("UPDATE \"user\"" +
               "SET username = (?), currency = (?), firstname = (?), surname = (?), photo = (?)" +
               "WHERE id=(?)",
@@ -169,12 +169,11 @@ public class UserRepositorySJdbc implements UserRepository {
 
       return user;
     });
-    return user;
   }
 
   @Override
   public UserAuthEntity updateInAuthById(UserAuthEntity user) {
-    authTxt.execute(status -> {
+    return authTxt.execute(status -> {
       authTemplate.update("UPDATE \"user\"" +
               "SET username = (?), password = (?), enabled = (?), " +
               "account_non_expired = (?), account_non_locked = (?), credentials_non_expired = (?)" +
@@ -204,6 +203,5 @@ public class UserRepositorySJdbc implements UserRepository {
       });
       return user;
     });
-    return null;
   }
 }
