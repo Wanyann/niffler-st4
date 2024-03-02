@@ -1,6 +1,7 @@
 package guru.qa.niffler.api;
 
 import guru.qa.niffler.model.SpendJson;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -15,6 +16,6 @@ public interface SpendApi {
   Call<SpendJson> addSpend(@Body SpendJson spend);
 
   @DELETE("/deleteSpends")
-  void deleteSpends(@Query("username") String username,
-                    @Query("ids") List<String> ids);
+  Call<ResponseBody> deleteSpends(@Query("username") String username,
+                                  @Query("ids") List<String> ids);
 }

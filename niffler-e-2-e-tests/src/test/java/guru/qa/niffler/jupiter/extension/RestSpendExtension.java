@@ -6,6 +6,7 @@ import guru.qa.niffler.db.model.SpendEntity;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.model.SpendJson;
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import retrofit2.Retrofit;
@@ -91,7 +92,8 @@ public class RestSpendExtension extends SpendExtension implements AfterEachCallb
     // todo не работает удаление после теста,
     //  разобраться после того как прикручу логи к ретрофиту
     SpendEntity spendEntity = extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId() + SPEND_KEY, SpendEntity.class);
-    spendApi.deleteSpends(spendEntity.getUsername(), List.of(spendEntity.getId().toString()));
+    ResponseBody body = spendApi.deleteSpends(spendEntity.getUsername(), List.of(spendEntity.getId().toString())).execute().body();
+    System.out.println(body);
   }
 
 }
