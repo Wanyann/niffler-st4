@@ -1,6 +1,7 @@
 package guru.qa.niffler.jupiter.extension;
 
 import guru.qa.niffler.db.repository.UserRepository;
+import guru.qa.niffler.db.repository.UserRepositoryHibernate;
 import guru.qa.niffler.db.repository.UserRepositoryJdbc;
 import guru.qa.niffler.db.repository.UserRepositorySJdbc;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -24,6 +25,9 @@ public class UserRepositoryExtension implements TestInstancePostProcessor {
           }
           case "sjdbc": {
             field.set(o, new UserRepositorySJdbc());
+          }
+          case "hibernate": {
+            field.set(o, new UserRepositoryHibernate());
           }
         }
       }

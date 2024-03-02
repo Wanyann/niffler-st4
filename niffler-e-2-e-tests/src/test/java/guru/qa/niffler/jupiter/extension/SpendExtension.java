@@ -1,78 +1,81 @@
 package guru.qa.niffler.jupiter.extension;
 
-import guru.qa.niffler.api.SpendApi;
-import guru.qa.niffler.jupiter.annotation.GenerateCategory;
+import com.github.javafaker.Faker;
+import guru.qa.niffler.db.model.CategoryEntity;
+import guru.qa.niffler.db.model.SpendEntity;
+import guru.qa.niffler.db.model.UserAuthEntity;
+import guru.qa.niffler.jupiter.annotation.DbUser;
 import guru.qa.niffler.jupiter.annotation.GenerateSpend;
-import guru.qa.niffler.model.SpendJson;
-import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
-import retrofit2.Retrofit;
-import retrofit2.converter.jackson.JacksonConverterFactory;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Optional;
 
-public class SpendExtension implements BeforeEachCallback {
+public abstract class SpendExtension implements BeforeEachCallback {
 
   public static final ExtensionContext.Namespace NAMESPACE
       = ExtensionContext.Namespace.create(SpendExtension.class);
+  public static final String SPEND_KEY = "spend";
+  public static final String CATEGORY_KEY = "category";
+  static final Faker FAKER = new Faker();
 
-  private static final OkHttpClient httpClient = new OkHttpClient.Builder().build();
-  private static final Retrofit retrofit = new Retrofit.Builder()
-      .client(httpClient)
-      .baseUrl("http://127.0.0.1:8093")
-      .addConverterFactory(JacksonConverterFactory.create())
-      .build();
-
-  private final SpendApi spendApi = retrofit.create(SpendApi.class);
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
-    Optional<GenerateSpend> spend = AnnotationSupport.findAnnotation(
+    guru.qa.niffler.db.model.SpendEntity spendEntity = new SpendEntity();
+    CategoryEntity categoryEntity = new CategoryEntity();
+
+    Optional<GenerateSpend> spendAnnotation = AnnotationSupport.findAnnotation(
         extensionContext.getRequiredTestMethod(),
         GenerateSpend.class
     );
 
-    Optional<GenerateCategory> category = AnnotationSupport.findAnnotation(
+    Optional<DbUser> userAnnotation = AnnotationSupport.findAnnotation(
         extensionContext.getRequiredTestMethod(),
-        GenerateCategory.class
+        DbUser.class
     );
 
-    if (spend.isPresent()) {
-      GenerateSpend spendData = spend.get();
-      SpendJson spendJson;
+    if (!userAnnotation.isPresent()) {
+      throw new RuntimeException("Username wasn't provided");
+    }
+    if (spendAnnotation.isPresent()) {
+      GenerateSpend spend = spendAnnotation.get();
+      UserAuthEntity user = extensionContext.getStore(DbUserExtension.NAMESPACE)
+          .get(extensionContext.getUniqueId() + DbUserExtension.USER_KEY, UserAuthEntity.class);
+      categoryEntity.setUsername(user.getUsername());
 
-      if (spendData.category().equals("unassigned") && category.isPresent()) {
-        GenerateCategory categoryData = category.get();
-        System.out.println("Category annotation worked");
-        spendJson = new SpendJson(
-            null,
-            new Date(),
-            categoryData.category(),
-            spendData.currency(),
-            spendData.amount(),
-            spendData.description(),
-            spendData.username()
-        );
-      } else if (spendData.category().equals("unassigned")) {
-        throw new RuntimeException("Category not found. Please provide category value.");
+      if (spend.description().equals("unassigned")) {
+        spendEntity.setDescription(FAKER.book().title());
       } else {
-        spendJson = new SpendJson(
-            null,
-            new Date(),
-            spendData.category(),
-            spendData.currency(),
-            spendData.amount(),
-            spendData.description(),
-            spendData.username()
-        );
+        spendEntity.setDescription(spend.category());
       }
 
-      SpendJson created = spendApi.addSpend(spendJson).execute().body();
-      extensionContext.getStore(NAMESPACE)
-          .put("spend", created);
+      if (spend.category().equals("unassigned")) {
+        categoryEntity.setCategory(FAKER.cat().name());
+      } else {
+        categoryEntity.setCategory(spend.category());
+      }
+
+      if (spend.amount() == 0) {
+        spendEntity.setAmount(FAKER.number().randomDouble(5, 1, 100_000));
+      } else {
+        spendEntity.setAmount(spend.amount());
+      }
+
+      spendEntity.setSpendDate(new Date());
+      spendEntity.setCurrency(spend.currency());
+      spendEntity.setCategory(categoryEntity);
+      spendEntity.setUsername(user.getUsername());
+
+      SpendEntity createdSpend = createSpend(spendEntity);
+
+      extensionContext.getStore(NAMESPACE).put(extensionContext.getUniqueId() + SPEND_KEY, createdSpend);
+      extensionContext.getStore(NAMESPACE).put(extensionContext.getUniqueId() + CATEGORY_KEY, createdSpend.getCategory());
     }
   }
+
+  abstract SpendEntity createSpend(SpendEntity spendEntity) throws IOException;
 }

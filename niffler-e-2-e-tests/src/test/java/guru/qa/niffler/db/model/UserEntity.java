@@ -1,5 +1,6 @@
 package guru.qa.niffler.db.model;
 
+import guru.qa.niffler.model.CurrencyValues;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
