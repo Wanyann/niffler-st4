@@ -13,7 +13,7 @@ public record SpendJson(
     @JsonProperty("spendDate")
     Date spendDate,
     @JsonProperty("category")
-    CategoryJson category,
+    String category,
     @JsonProperty("currency")
     CurrencyValues currency,
     @JsonProperty("amount")
@@ -25,11 +25,9 @@ public record SpendJson(
 
   public SpendEntity toEntity() {
     SpendEntity spendEntity = new SpendEntity();
-    CategoryEntity categoryEntity = new CategoryEntity();
 
-    categoryEntity.setId(this.category.id());
-    categoryEntity.setCategory(this.category.category());
-    categoryEntity.setUsername(this.category.username());
+    CategoryEntity categoryEntity = new CategoryEntity();
+    categoryEntity.setCategory(this.category);
 
     spendEntity.setId(this.id);
     spendEntity.setSpendDate(this.spendDate);

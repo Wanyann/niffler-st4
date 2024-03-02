@@ -62,7 +62,7 @@ public class SpendEntity {
     return new SpendJson(
         this.id,
         this.spendDate,
-        this.category.toJson(),
+        this.category.getCategory(),
         this.currency,
         this.amount,
         this.description,

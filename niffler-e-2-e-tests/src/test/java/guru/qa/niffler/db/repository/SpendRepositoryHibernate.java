@@ -33,7 +33,7 @@ public class SpendRepositoryHibernate extends JpaService implements SpendReposit
 
   @Override
   public SpendEntity updateSpend(SpendEntity spendEntity) {
-    throw new UnsupportedOperationException();
+    return merge(SPEND, spendEntity);
   }
 
   @Override
@@ -55,7 +55,7 @@ public class SpendRepositoryHibernate extends JpaService implements SpendReposit
 
   @Override
   public CategoryEntity updateCategory(CategoryEntity categoryEntity) {
-    throw new UnsupportedOperationException();
+    return merge(SPEND, categoryEntity);
   }
 
   @Override

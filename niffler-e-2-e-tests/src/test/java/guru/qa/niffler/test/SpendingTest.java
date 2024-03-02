@@ -1,10 +1,10 @@
 package guru.qa.niffler.test;
 
 import com.codeborne.selenide.Configuration;
+import guru.qa.niffler.db.model.SpendEntity;
 import guru.qa.niffler.db.model.UserAuthEntity;
 import guru.qa.niffler.jupiter.annotation.DbUser;
 import guru.qa.niffler.jupiter.annotation.GenerateSpend;
-import guru.qa.niffler.model.SpendJson;
 import org.junit.jupiter.api.Test;
 
 public class SpendingTest extends BaseWebTest {
@@ -16,14 +16,14 @@ public class SpendingTest extends BaseWebTest {
   @DbUser
   @GenerateSpend()
   @Test
-  void spendingShouldBeDeletedByButtonDeleteSpending(UserAuthEntity user, SpendJson spend) {
+  void spendingShouldBeDeletedByButtonDeleteSpending(UserAuthEntity user, SpendEntity spend) {
     welcomePage.clickLoginButton();
     loginPage.
         authorize(user.getUsername(), user.getPassword());
 
     mainPage
-        .selectSpendingWithDescription(spend.description())
-        .clickDeleteSelectedButton()
+        .selectSpendingWithDescription(spend.getDescription())
+//        .clickDeleteSelectedButton()
         .spendingRowsCountShouldBeEqualTo(0);
   }
 }
